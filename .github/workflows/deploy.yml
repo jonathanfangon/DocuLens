@@ -12,7 +12,7 @@ name: Deploy
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 # Prevent concurrent deployments — if a new push comes in while
 # deploying, the in-progress deploy finishes and the new one starts.
