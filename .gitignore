@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+cdk.out/
+.env
+.env.local
+*.js.map
+*.d.ts
+!jest.config.js
+.DS_Store
+.claude/

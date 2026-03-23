@@ -1,0 +1,141 @@
+{
+  "incidentReport": {
+    "id": "INC-2026-0847",
+    "severity": "SEV-1",
+    "status": "resolved",
+    "title": "Complete API Gateway Outage — US-East Region",
+    "timeline": {
+      "detected": "2026-03-10T14:23:00Z",
+      "acknowledged": "2026-03-10T14:26:00Z",
+      "mitigated": "2026-03-10T15:41:00Z",
+      "resolved": "2026-03-10T17:08:00Z",
+      "postmortemCompleted": "2026-03-12T10:00:00Z"
+    },
+    "duration": {
+      "totalMinutes": 165,
+      "timeToDetect": 3,
+      "timeToAcknowledge": 3,
+      "timeToMitigate": 78,
+      "timeToResolve": 165
+    },
+    "impact": {
+      "affectedServices": [
+        "Public REST API",
+        "GraphQL Gateway",
+        "Webhook Delivery System",
+        "Partner Integration Layer"
+      ],
+      "affectedCustomers": 12847,
+      "failedRequests": 4283921,
+      "estimatedRevenueLoss": "$142,000",
+      "slaBreached": true,
+      "slaCreditsOwed": "$38,500"
+    },
+    "rootCause": {
+      "summary": "A misconfigured rate limiting rule deployed at 14:18 UTC set the global request threshold to 100 req/s instead of 100,000 req/s. The configuration change was pushed through the fast-track deployment pipeline which bypasses staging validation.",
+      "category": "configuration-error",
+      "triggerEvent": "Deployment of rate-limiter v2.4.1 via fast-track pipeline",
+      "contributingFactors": [
+        "Fast-track pipeline lacks configuration validation step",
+        "Rate limit value was stored as a raw integer without unit suffix, making 100 vs 100000 visually ambiguous in the config file",
+        "No automatic rollback trigger — the deployment health check only verified the service was running, not that it was processing traffic correctly",
+        "The on-call engineer was in a meeting and initially missed the PagerDuty alert (3-minute acknowledge time is within SLA but the alert escalation path was suboptimal)"
+      ]
+    },
+    "responseActions": [
+      {
+        "time": "14:23",
+        "action": "Automated monitoring detected error rate spike (>50% 429 responses)",
+        "actor": "Datadog Alert"
+      },
+      {
+        "time": "14:26",
+        "action": "On-call engineer Alex Kim acknowledged alert and began investigation",
+        "actor": "Alex Kim (SRE)"
+      },
+      {
+        "time": "14:34",
+        "action": "Identified rate limiter as potential cause. Attempted to increase limits via admin panel — access denied due to recent RBAC changes",
+        "actor": "Alex Kim (SRE)"
+      },
+      {
+        "time": "14:42",
+        "action": "Escalated to platform team lead. Sarah Okafor joined incident channel",
+        "actor": "Sarah Okafor (Platform Lead)"
+      },
+      {
+        "time": "14:58",
+        "action": "Confirmed root cause: rate-limiter v2.4.1 config. Attempted rollback but fast-track pipeline does not support one-click rollback",
+        "actor": "Sarah Okafor (Platform Lead)"
+      },
+      {
+        "time": "15:22",
+        "action": "Manually deployed rate-limiter v2.4.0 through standard pipeline",
+        "actor": "Alex Kim (SRE)"
+      },
+      {
+        "time": "15:41",
+        "action": "Traffic restored. Error rates returned to baseline. Monitoring for stability",
+        "actor": "Alex Kim (SRE)"
+      },
+      {
+        "time": "17:08",
+        "action": "All queued webhook deliveries processed. Incident declared resolved",
+        "actor": "Sarah Okafor (Platform Lead)"
+      }
+    ],
+    "remediation": {
+      "immediate": [
+        "Reverted rate-limiter to v2.4.0",
+        "Sent customer communication acknowledging outage and SLA credits"
+      ],
+      "shortTerm": [
+        {
+          "action": "Add configuration validation to fast-track pipeline",
+          "owner": "Platform Team",
+          "deadline": "2026-03-17",
+          "status": "completed",
+          "jiraTicket": "PLAT-4521"
+        },
+        {
+          "action": "Implement automatic rollback on error rate threshold breach",
+          "owner": "SRE Team",
+          "deadline": "2026-03-24",
+          "status": "in-progress",
+          "jiraTicket": "SRE-1893"
+        },
+        {
+          "action": "Add unit suffix to all rate limit configuration values (e.g., '100000/s' instead of '100000')",
+          "owner": "Platform Team",
+          "deadline": "2026-03-19",
+          "status": "completed",
+          "jiraTicket": "PLAT-4522"
+        }
+      ],
+      "longTerm": [
+        {
+          "action": "Implement canary deployments for all configuration changes",
+          "owner": "Platform Team",
+          "deadline": "2026-04-15",
+          "status": "planned",
+          "jiraTicket": "PLAT-4530"
+        },
+        {
+          "action": "Build configuration diff review requirement for production changes",
+          "owner": "Engineering",
+          "deadline": "2026-04-30",
+          "status": "planned",
+          "jiraTicket": "ENG-7821"
+        }
+      ]
+    },
+    "lessonsLearned": [
+      "Fast-track deployment pipelines must have the same safety checks as standard pipelines — speed should not bypass validation",
+      "Configuration values should be self-documenting (include units, ranges, and descriptions)",
+      "Health checks must verify functional correctness, not just process liveness",
+      "RBAC changes should be communicated to on-call engineers before they go live"
+    ],
+    "author": "Sarah Okafor",
+    "reviewedBy": ["Alex Kim", "David Chen (VP Engineering)", "Lisa Park (CTO)"]
+  }
+}
