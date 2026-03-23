@@ -1,0 +1,60 @@
+# CI Pipeline
+# Runs on every push and pull request to validate the codebase.
+# Type-checks all three packages (frontend, backend, infrastructure)
+# and builds the frontend to catch any compilation errors early.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  typecheck-and-build:
+    name: Type Check & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Install all three packages in parallel-friendly order
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install infrastructure dependencies
+        working-directory: infrastructure
+        run: npm ci
+
+      # Type-check each package
+      - name: Type-check frontend
+        working-directory: frontend
+        run: npx tsc -b
+
+      - name: Type-check backend
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Type-check infrastructure
+        working-directory: infrastructure
+        run: npx tsc --noEmit
+
+      # Lint frontend
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      # Build frontend to verify production bundle works
+      - name: Build frontend
+        working-directory: frontend
+        run: npx vite build
