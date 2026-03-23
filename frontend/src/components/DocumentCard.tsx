@@ -58,9 +58,11 @@ export function DocumentCard({ document: doc, index }: DocumentCardProps) {
   const status = statusConfig[doc.status];
   const StatusIcon = status.icon;
 
+  const [now] = useState(() => Date.now());
+
   const timeAgo = (dateStr: string) => {
     const seconds = Math.floor(
-      (Date.now() - new Date(dateStr).getTime()) / 1000
+      (now - new Date(dateStr).getTime()) / 1000
     );
     if (seconds < 60) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;

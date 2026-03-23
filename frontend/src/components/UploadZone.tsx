@@ -41,7 +41,7 @@ export function UploadZone({ onUpload }: UploadZoneProps) {
 
   return (
     <motion.div
-      {...getRootProps()}
+      {...(getRootProps() as React.ComponentProps<typeof motion.div>)}
       className="upload-zone"
       animate={{
         borderColor: isDragActive

@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # Install all three packages in parallel-friendly order
       - name: Install frontend dependencies

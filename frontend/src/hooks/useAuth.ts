@@ -73,7 +73,7 @@ export function useAuth() {
         }
       );
     } else {
-      setAuthState({ status: "signedOut" });
+      queueMicrotask(() => setAuthState({ status: "signedOut" }));
     }
   }, []);
 
@@ -85,7 +85,7 @@ export function useAuth() {
           new CognitoUserAttribute({ Name: "email", Value: email }),
         ];
 
-        userPool.signUp(email, password, attributes, [], (err, result) => {
+        userPool.signUp(email, password, attributes, [], (err) => {
           if (err) {
             setError(err.message);
             resolve(false);
